@@ -1,97 +1,128 @@
 import { useState } from "react";
-import { Table, Radio } from "@arco-design/web-react";
-const columns = [
+import { Transfer, Table } from "@arco-design/web-react";
+
+const TableTransfer = ({ sourceColumns, targetColumns, ...restProps }) => (
+  <Transfer {...restProps}>
+    {({
+      listType,
+      filteredItems,
+      onItemSelect,
+      onItemSelectAll,
+      selectedKeys: listSelectedKeys,
+      disabled: listDisabled,
+    }) => {
+      const columns = listType === "source" ? sourceColumns : targetColumns;
+      console.log(
+        "listType",
+        listType,
+        "filteredItems",
+        filteredItems,
+        "onItemSelect",
+        onItemSelect,
+        "onItemSelectAll",
+        onItemSelectAll,
+        "listSelectedKeys",
+        listSelectedKeys,
+        "listDisabled",
+        listDisabled
+      );
+      return (
+        <Table
+          style={{
+            pointerEvents: listDisabled ? "none" : null,
+            borderRadius: 0,
+          }}
+          pagination={false}
+          data={filteredItems}
+          columns={columns}
+          rowSelection={{
+            checkCrossPage: true,
+            selectedRowKeys: listSelectedKeys,
+            checkboxProps: (item) => {
+              return {
+                disabled: listDisabled || item.disabled,
+                // Avoid triggering onRow.onClick
+                onClick: (e) => e.stopPropagation(),
+              };
+            },
+
+            onChange(selectedRowKeys) {
+              onItemSelectAll(selectedRowKeys, true);
+            },
+          }}
+          onRow={({ key, disabled: itemDisabled }) => ({
+            onClick: (e) => {
+              !itemDisabled &&
+                !listDisabled &&
+                onItemSelect(key, !listSelectedKeys.includes(key));
+            },
+          })}
+        />
+      );
+    }}
+  </Transfer>
+);
+
+const dataSource = [
   {
-    title: "Name",
-    dataIndex: "name",
+    key: "0",
+    company: "Bytedance Technology Co., Ltd.",
+    headcount: 3000000,
+    industry: "Technology",
   },
   {
-    title: "Salary",
-    dataIndex: "salary",
+    key: "1",
+    company: "Toutiao Co., Ltd.",
+    headcount: 40000,
+    industry: "AI",
   },
   {
-    title: "Address",
-    dataIndex: "address",
+    key: "2",
+    company: "Beijing Toutiao Technology Co., Ltd.",
+    headcount: 500000,
+    industry: "Technology",
   },
   {
-    title: "Email",
-    dataIndex: "email",
+    key: "3",
+    company: "Beijing Volcengine Technology...",
+    headcount: 6000000,
+    industry: "Technology",
   },
 ];
-const data = [
+const tableColumns = [
   {
-    id: "1",
-    name: "Jane Doe",
-    salary: 23000,
-    address: "32 Park Road, London",
-    email: "jane.doe@example.com",
+    dataIndex: "company",
+    title: "Company",
   },
   {
-    id: "2",
-    name: "Alisa Ross",
-    salary: 25000,
-    address: "35 Park Road, London",
-    email: "alisa.ross@example.com",
+    dataIndex: "headcount",
+    title: "Headcount",
+    sorter: (a, b) => a.headcount - b.headcount,
+    render: (_, item) => `${item.headcount}`.replace(/B(?=(d{3})+(?!d))/g, ","),
   },
   {
-    id: "3",
-    name: "Kevin Sandra",
-    salary: 22000,
-    address: "31 Park Road, London",
-    email: "kevin.sandra@example.com",
-  },
-  {
-    id: "4",
-    name: "Ed Hellen",
-    salary: 17000,
-    address: "42 Park Road, London",
-    email: "ed.hellen@example.com",
-  },
-  {
-    id: "5",
-    name: "William Smith",
-    salary: 27000,
-    address: "62 Park Road, London",
-    email: "william.smith@example.com",
+    dataIndex: "industry",
+    title: "Industry",
+    sorter: (a, b) =>
+      a.industry.toUpperCase() > b.industry.toUpperCase() ? 1 : -1,
   },
 ];
 
 function App() {
-  const [type, setType] = useState("checkbox");
-  const [selectedRowKeys, setSelectedRowKeys] = useState(["4"]);
+  const [targetKeys, setTargetKeys] = useState([]);
   return (
-    <div>
-      <Radio.Group
-        style={{
-          marginBottom: 20,
-        }}
-        type="button"
-        options={["checkbox", "radio"]}
-        value={type}
-        onChange={(v) => setType(v)}
-      />
-      <Table
-        rowKey="id"
-        columns={columns}
-        data={data}
-        rowSelection={{
-          type,
-          selectedRowKeys,
-          onChange: (selectedRowKeys, selectedRows) => {
-            console.log("onChange:", selectedRowKeys, selectedRows);
-            setSelectedRowKeys(selectedRowKeys);
-          },
-          onSelect: (selected, record, selectedRows) => {
-            console.log("onSelect:", selected, record, selectedRows);
-          },
-          checkboxProps: (record) => {
-            return {
-              disabled: record.id === "4",
-            };
-          },
-        }}
-      />
-    </div>
+    <TableTransfer
+      className="transfer-demo-with-table"
+      listStyle={{
+        width: 540,
+        height: 240,
+      }}
+      dataSource={dataSource}
+      targetKeys={targetKeys}
+      sourceColumns={tableColumns}
+      targetColumns={tableColumns}
+      onChange={(keys) => setTargetKeys(keys)}
+    />
   );
 }
 
